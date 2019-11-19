@@ -1,0 +1,35 @@
+// COLORS
+$color-blue: #06C3BF;
+$color-green: #00D2AD;
+
+$color-grey-light: #eee;
+
+$color-grey-dark: #555;
+
+$color-white: #fff;
+$color-black: #000;
+
+*,
+*::after,
+*::before {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
+}
+
+html {
+    font-size: 62.5%; //1 rem = 10px;
+}
+
+body {
+    box-sizing: border-box;
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    color: $color-grey-light;
+}
+
+@media (max-width: 400px) {
+    html {
+        font-size: 45%;
+    }
+}

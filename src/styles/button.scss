@@ -1,0 +1,24 @@
+.buttons {
+    display: flex;
+    flex-direction: row;
+}
+
+.numeric-buttons {
+    flex: 3;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row-reverse;
+}
+
+.control-buttons {
+    flex: 1;
+}
+
+.btn {
+    flex: 0 0 10rem;
+    border: 0.5px solid $color-grey-light;
+    height: 10rem;
+    padding-top: 3rem;
+    color: $color-grey-dark;
+    font-size: 3rem;
+}

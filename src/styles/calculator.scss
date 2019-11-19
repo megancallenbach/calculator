@@ -1,0 +1,33 @@
+$font-size: 3rem;
+
+.background {
+    background: linear-gradient($color-blue, $color-green);
+    width: 100vw;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.calculator {
+    height: 60rem;
+    width: 40rem;
+    margin-top: calc((100vh - 60rem) / 2);
+    background: white;
+    text-align: center;
+    flex-direction: column;
+    border-radius: 1.5rem;
+    overflow: hidden;
+}
+
+.calculation {
+    background: $color-grey-dark;
+    height: 10rem;
+    font-size: 3.5rem;
+    padding: 3rem;
+    text-align: right;
+}
