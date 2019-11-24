@@ -94,10 +94,10 @@ class Calculator extends Component {
     } else if (value === '.') {
 
       let reversedCalc = calculation.split("").reverse().join("");
-      let numberRegex = '^(?<number>[-]?[\\d]*[.]?[\\d]*(e+\\d*)?)';
+      let numberRegex = '^([-]?[\\d]*[.]?[\\d]*(e+\\d*)?)';
       let numberMatch = reversedCalc.match(numberRegex);
 
-      if (numberMatch && numberMatch['groups']['number'].indexOf('.') !== -1) {
+      if (numberMatch && numberMatch[0].indexOf('.') !== -1) {
         value = '';
       }
     }
