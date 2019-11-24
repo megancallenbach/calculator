@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
+import calculate from '../utils/calculate';
 
 const numberKeys = [
   { value: 0, order: 18 },
@@ -40,33 +41,50 @@ class Calculator extends Component {
     }
 
     this.appendValue = this.appendValue.bind(this);
-    this.calculate = this.calculate.bind(this);
+    this.doCalculation = this.doCalculation.bind(this);
   }
 
   appendValue(value) {
 
     let calculation = this.state.calculation;
 
-    let isNumberKey = _.findIndex(numberKeys, (obj) => obj.value === value) !== -1;
-    let isMathKey = !isNumberKey && _.findIndex(mathKeys, (obj) => obj.value === value) !== -1;
+    let isNumberKey = (key) => _.findIndex(numberKeys, (obj) => obj.value.toString() === key.toString()) !== -1;
+    let isMathKey = (key) => !isNumberKey(key) && _.findIndex(mathKeys, (obj) => obj.value === key) !== -1;
 
+    let lastKey = calculation.slice(-1);
+    let secondLastKey = calculation.slice(-2, -1);
 
-    if (calculation === 'Infinity') {
-      calculation = '0';
-      value = '';
-
-      // remove leading 0
-    } else if (calculation === '0' && (isNumberKey || value === '√' || value === '-')) {
+      // infinity not supported, reset to 0.
+    if (calculation === 'Infinity' || calculation === 'Error') {
       calculation = '';
 
-      // starting with a math key unsupported...
+      // remove leading 0 when key is a valid starting character
+    } else if (calculation === '0' && (isNumberKey(value) || value === '√' || value === '-')) {
+      calculation = '';
+
+      // starting with a math key (thats not '-' or '√') is unsupported...
     } else if (calculation === '0') {
       value = '';
 
-      // double math key replaces first one
-    } else if (_.findIndex(mathKeys, (obj) => obj.value === calculation.slice(-1)) !== -1 && isMathKey) {
+      // assume multiplication with a number and then square root (no operator in between)
+    } else if (value === '√' && (!isMathKey(lastKey) || lastKey === '√')) {
 
-      let isAllowed = _.findIndex(mathKeys, (obj) => obj.value === calculation.slice(-2, -1)) === -1 && (value === '-' || (value === '√' && calculation.slice(-1) === '-'));
+      if (secondLastKey === 'x' && lastKey === '√') {
+        value = '';
+      } else {
+        calculation += 'x';
+      }
+
+      // double math key replaces first one
+    } else if (isMathKey(lastKey) && isMathKey(value)) {
+
+      // replace the operator and minus value from calculation when the operator changes
+      if (isMathKey(secondLastKey) && lastKey === '-') {
+        calculation = calculation.slice(0, -1);
+      }
+
+      let minusAllowed = (!secondLastKey || isNumberKey(secondLastKey) || secondLastKey === 'x') && value === '-' && isMathKey(lastKey);
+      let isAllowed = minusAllowed || (isMathKey(lastKey) && (value === '√' && lastKey !== '√'));
 
       if (!isAllowed) {
         calculation = calculation.slice(0, -1);
@@ -84,123 +102,30 @@ class Calculator extends Component {
       }
     }
 
-    calculation = calculation + value;
+    calculation += value;
 
     this.setState({ calculation: calculation });
   }
 
-  calculate() {
+  doCalculation() {
 
     let calculation = this.state.calculation;
 
-    let numbers = [];
-    let operators = [];
-
-    let numberRegex = '^(?<number>[-]?[\\d]*[.]?[\\d]*(e\\+\\d*)?)';
-    let operatorRegex = '^(?<operator>[+\\-x/^√])';
-
-    let findNumber = () => {
-      let numberMatch = calculation.match(numberRegex);
-
-      if (numberMatch && numberMatch['groups']['number']) {
-        numbers.push(numberMatch['groups']['number']);
-
-        calculation = calculation.substring(numberMatch['groups']['number'].length);
-      }
-    }
-
-    let findOperator = () => {
-      let operatorMatch = calculation.match(operatorRegex);
-
-      if (operatorMatch && operatorMatch['groups']['operator']) {
-        operators.push(operatorMatch['groups']['operator']);
-
-        calculation = calculation.substring(operatorMatch['groups']['operator'].length);
-      }
-    }
-
-    while (calculation.length !== 0) {
-      findNumber();
-      findOperator();
-    }
-
-    while (operators.length !== 0) {
-
-      let orderOfOperations = [
-        ['^', '√'],
-        ['x', '/'],
-        ['+', '-'],
-      ];
-
-      orderOfOperations.forEach((prioOperators) => {
-
-        let index = _.findIndex(operators, (op) => prioOperators.indexOf(op) !== -1);
-
-        while (index !== -1) {
-
-          let result = null;
-
-          let operator = operators[index];
-
-          operators.splice(index, 1);
-
-          let firstNumber = numbers[index];
-          let secondNumber = numbers[index + 1];
-
-          numbers.splice((index), 1);
-
-          if (firstNumber != null && operator && secondNumber !== null) {
-
-            switch (operator) {
-              case 'x':
-                result = Number(firstNumber) * Number(secondNumber);
-                break;
-
-              case '/':
-                result = Number(firstNumber) / Number(secondNumber);
-                break;
-
-              case '^':
-                result = Math.pow(Number(firstNumber), Number(secondNumber));
-                break;
-
-              case '+':
-                result = Number(firstNumber) + Number(secondNumber);
-                break;
-
-              case '-':
-                result = Number(firstNumber) - Number(secondNumber);
-                break;
-
-              case '√':
-                result = Number(firstNumber) * Math.sqrt(Number(secondNumber));
-                break;
-            }
-          } else if (operator === '√' && firstNumber) {
-            result = Math.sqrt(Number(firstNumber));
-          }
-
-          numbers[index] = result;
-
-          index = _.findIndex(operators, (op) => prioOperators.indexOf(op) !== -1);
-
-        }
-      });
-
-    }
-
-    this.setState({ calculation: numbers[0].toString() });
+    this.setState({ calculation: calculate(calculation).toString() });
 
   }
 
   render() {
+
+    let smallerFont = 4.5 - (this.state.calculation.length / 5 / 2.6);
+    let calculationFontSize = (this.state.calculation.length > 18 ? smallerFont < 2.3 ? 2.3 : smallerFont : 3.5);
 
     return (
       <div className="background">
         <div className="container">
           <div className="calculator">
 
-            <div className="calculation">
+            <div className="calculation" style={{ fontSize: calculationFontSize + 'rem' }}>
               {this.state.calculation}
             </div>
             <div className="buttons">
@@ -228,7 +153,7 @@ class Calculator extends Component {
                   value='='
                   order={19}
                   flex={2}
-                  onPress={() => this.calculate()}
+                  onPress={() => this.doCalculation()}
                 />
             </div>
           </div>
